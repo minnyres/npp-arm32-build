@@ -1,0 +1,48 @@
+name: Build for Windows ARM32
+
+on:
+  push:
+
+jobs:
+  build-windows-arm32:
+    name: Build
+    runs-on: ubuntu-latest
+    env:
+      llvm_path: "${{ github.workspace }}/llvm-mingw"
+      npp_version: "8.6.8"
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install tools
+        run: |
+          sudo apt update
+          sudo apt install \
+            gcc git pkg-config p7zip libtool make
+          wget https://github.com/mstorsjo/llvm-mingw/releases/download/20231128/llvm-mingw-20231128-ucrt-ubuntu-20.04-x86_64.tar.xz
+          tar -xf llvm-mingw-*.tar.xz
+          rm llvm-mingw-*.tar.xz
+          mv llvm-mingw-* llvm-mingw
+          
+      - name: Build NPP
+        run: |
+          PATH=$PATH:${{ env.llvm_path }}/bin
+          TARGET=armv7-w64-mingw32
+          git clone --depth 1 --branch v${{ env.npp_version }} https://github.com/notepad-plus-plus/notepad-plus-plus.git  
+
+          cd notepad-plus-plus
+          git apply ${{ github.workspace }}/fix-arm32-build.patch
+          cd PowerEditor/gcc
+          make \
+            CXX=$TARGET-g++ RC="$TARGET-windres -c 65001" \
+            AR="$TARGET-ar" RANLIB="$TARGET-ranlib" NM="$TARGET-nm" \
+            BUILD_TYPE=Release 
+          7z a -mx9 npp-arm32-v${{ env.npp_version }}.7z bin.armv7/*
+          mv npp*.7z ${{ github.workspace }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: npp-arm32
+          path: npp*.7z
