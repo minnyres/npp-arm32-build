@@ -30,19 +30,19 @@ jobs:
           PATH=$PATH:${{ env.llvm_path }}/bin
           TARGET=armv7-w64-mingw32
           git clone --depth 1 --branch v${{ env.npp_version }} https://github.com/notepad-plus-plus/notepad-plus-plus.git  
-
           cd notepad-plus-plus
+          sed -i 's/SC_TECHNOLOGY_DIRECTWRITE/SC_TECHNOLOGY_DIRECTWRITERETAIN/g' PowerEditor/src/ScintillaComponent/ScintillaEditView.cpp
           git apply ${{ github.workspace }}/fix-arm32-build.patch
           cd PowerEditor/gcc
           make \
             CXX=$TARGET-g++ RC="$TARGET-windres -c 65001" \
             AR="$TARGET-ar" RANLIB="$TARGET-ranlib" NM="$TARGET-nm" \
             BUILD_TYPE=Release 
-          7z a -mx9 npp-arm32-v${{ env.npp_version }}.7z bin.armv7/*
-          mv npp*.7z ${{ github.workspace }}
+          mv bin.armv7 ${{ github.workspace }}/npp-arm32-v${{ env.npp_version }}
+          git restore .
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3
         with:
           name: npp-arm32
-          path: npp*.7z
+          path: npp-arm32-*
