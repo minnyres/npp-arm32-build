@@ -40,9 +40,19 @@ jobs:
             BUILD_TYPE=Release 
           mv bin.armv7 ${{ github.workspace }}/npp-arm32-v${{ env.npp_version }}
           git restore .
+          cd ${{ github.workspace }}
+          7z a -mx9 npp-arm32-v${{ env.npp_version }}.zip npp-arm32-v${{ env.npp_version }}/*
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3
         with:
           name: npp-arm32
           path: npp-arm32-*
+
+      - name: Batch release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: npp-arm32-*.zip
