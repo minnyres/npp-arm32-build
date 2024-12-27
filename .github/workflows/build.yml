@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       llvm_path: "${{ github.workspace }}/llvm-mingw"
-      npp_version: "8.7.1"
+      npp_version: "8.7.5"
     
     steps:
       - name: Checkout repository
